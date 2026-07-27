@@ -21,16 +21,51 @@ env = environ.Env(
 )
 environ.Env.read_env(BASE_DIR / ".env")
 
+
+def _clean_origins(raw: list) -> list:
+    """Sanitize a list of CORS/CSRF origins read from environment variables.
+
+    Render's (and Vercel's) env var dashboards make it easy to accidentally
+    include the full 'KEY=value' pair as the value, e.g. setting
+    CORS_ALLOWED_ORIGINS to 'FRONTEND_URL=https://app.vercel.app' instead of
+    just 'https://app.vercel.app'. This function handles that, plus trailing
+    slashes (E014) and any other surrounding whitespace/noise.
+    """
+    result = []
+    for entry in raw:
+        entry = str(entry).strip()
+        # Strip accidental 'KEY=...' prefix produced by copy-pasting env var
+        # declarations (e.g. "FRONTEND_URL=https://...") into a value field.
+        if "=" in entry and not entry.startswith(("http://", "https://")):
+            entry = entry.split("=", 1)[1].strip()
+        # Strip trailing slashes -- corsheaders.E014 rejects them.
+        entry = entry.rstrip("/")
+        # Only keep entries that look like a valid origin.
+        if entry.startswith(("http://", "https://")):
+            result.append(entry)
+    return result
+
+
+def _clean_hosts(raw: list) -> list:
+    """Sanitize ALLOWED_HOSTS the same way -- strip KEY= prefixes and junk."""
+    result = []
+    for entry in raw:
+        entry = str(entry).strip()
+        if "=" in entry:
+            entry = entry.split("=", 1)[1].strip()
+        entry = entry.rstrip("/")
+        if entry:
+            result.append(entry)
+    return result
+
 SECRET_KEY = env(
     "DJANGO_SECRET_KEY",
     default=env("SECRET_KEY", default="django-insecure-change-me-in-production-foresight-cs"),
 )
 DEBUG = env("DEBUG")
-ALLOWED_HOSTS = env("ALLOWED_HOSTS")
-# Render's default *.onrender.com domain is always a valid host for this
-# service regardless of what ALLOWED_HOSTS is set to in the dashboard, so
-# it's appended in code rather than relying on every deploy to set it.
-if ".onrender.com" not in ALLOWED_HOSTS:
+ALLOWED_HOSTS = _clean_hosts(env("ALLOWED_HOSTS"))
+# Render's *.onrender.com domain is always a valid host for this service.
+if not any(h.endswith(".onrender.com") or h == ".onrender.com" for h in ALLOWED_HOSTS):
     ALLOWED_HOSTS.append(".onrender.com")
 
 # Signing key for access/refresh JWTs (rest_framework_simplejwt). Kept
@@ -256,28 +291,29 @@ SPECTACULAR_SETTINGS = {
     "SERVE_INCLUDE_SCHEMA": False,
 }
 
-# CORS -- frontend (Next.js) origin(s) only, read from .env.
-# Strip trailing slashes from every origin: corsheaders.E014 rejects them and
-# Render's dashboard makes it easy to accidentally include one.
-CORS_ALLOWED_ORIGINS = [o.rstrip("/") for o in env("CORS_ALLOWED_ORIGINS")]
+# CORS -- frontend (Next.js) origin(s) only, read from env.
+# _clean_origins() strips trailing slashes (corsheaders.E014), accidental
+# 'KEY=value' prefixes (corsheaders.E013 -- produced when the full env var
+# declaration is pasted into Render's value field), and any non-http/https junk.
+CORS_ALLOWED_ORIGINS = _clean_origins(env("CORS_ALLOWED_ORIGINS"))
 # Needed for CSRF-protected, cookie-based requests (Django admin,
-# SessionAuthentication) originating from the frontend's origin -- CORS
-# and CSRF are separate mechanisms; CORS_ALLOWED_ORIGINS above doesn't
-# satisfy this.
-CSRF_TRUSTED_ORIGINS = [o.rstrip("/") for o in env("CSRF_TRUSTED_ORIGINS")]
-# Deployed frontend origin (Vercel), set once as a single env var rather than
-# re-listing it inside ALLOWED_HOSTS/CORS_ALLOWED_ORIGINS/CSRF_TRUSTED_ORIGINS
-# separately on every redeploy. Must include the scheme (https://...).
-FRONTEND_URL = env("FRONTEND_URL", default="").rstrip("/")
-if FRONTEND_URL:
+# SessionAuthentication) from the frontend origin.
+CSRF_TRUSTED_ORIGINS = _clean_origins(env("CSRF_TRUSTED_ORIGINS"))
+# Deployed frontend origin (Vercel). Set this ONE env var in Render/Vercel
+# dashboards; it is automatically added to CORS and CSRF lists below.
+# Value should be just the origin: https://your-app.vercel.app (no trailing /)
+_raw_frontend = env("FRONTEND_URL", default="").strip()
+# Guard against the same KEY=value copy-paste mistake for FRONTEND_URL itself.
+if "=" in _raw_frontend and not _raw_frontend.startswith(("http://", "https://")):
+    _raw_frontend = _raw_frontend.split("=", 1)[1].strip()
+FRONTEND_URL = _raw_frontend.rstrip("/")
+if FRONTEND_URL and FRONTEND_URL.startswith(("http://", "https://")):
     if FRONTEND_URL not in CORS_ALLOWED_ORIGINS:
         CORS_ALLOWED_ORIGINS.append(FRONTEND_URL)
     if FRONTEND_URL not in CSRF_TRUSTED_ORIGINS:
         CSRF_TRUSTED_ORIGINS.append(FRONTEND_URL)
-# Required for the browser to send/receive the HttpOnly JWT cookies
-# (core.views.LoginView/LogoutView) on cross-origin requests from the
-# frontend -- without this, the browser silently drops Set-Cookie on the
-# login response and never attaches the cookies on subsequent requests.
+# Required for the browser to attach HttpOnly JWT cookies on cross-origin
+# requests -- without this the browser silently drops Set-Cookie headers.
 CORS_ALLOW_CREDENTIALS = True
 
 # Production hardening (django's own `manage.py check --deploy` checklist:
