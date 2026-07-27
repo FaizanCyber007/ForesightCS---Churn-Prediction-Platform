@@ -387,7 +387,8 @@ SUPERADMIN_PASSWORD = env("DJANGO_SUPERADMIN_PASSWORD", default="")
 # the nightly Churn Scoring Engine sweep (customers/tasks.py). Broker and
 # result backend are the same local Redis instance (docker-compose.yml's
 # `redis` service; REDIS_URL defaults to it, same pattern as DB_* above).
-REDIS_URL = env("REDIS_URL", default="redis://127.0.0.1:6379/0")
+_raw_redis = env("REDIS_URL", default="").strip()
+REDIS_URL = _raw_redis if _raw_redis else "redis://127.0.0.1:6379/0"
 CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
 CELERY_ACCEPT_CONTENT = ["json"]
