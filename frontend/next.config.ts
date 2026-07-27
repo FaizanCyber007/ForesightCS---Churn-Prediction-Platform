@@ -14,9 +14,17 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["three"],
   async rewrites() {
     return [
+      // Next.js's `:path*` catch-all drops any trailing slash when it
+      // reconstructs the destination URL (e.g. a request to
+      // /api/v1/auth/login/ is proxied upstream as .../auth/login, with no
+      // trailing slash). Every Django/DRF route in this project requires a
+      // trailing slash, so the backend's APPEND_SLASH middleware then
+      // 301-redirects back to the exact path the browser already requested
+      // -- an infinite loop (ERR_TOO_MANY_REDIRECTS) since the round trip
+      // repeats forever. Appending the slash explicitly here restores it.
       {
         source: "/api/v1/:path*",
-        destination: `${destinationBase}/api/v1/:path*`,
+        destination: `${destinationBase}/api/v1/:path*/`,
       },
     ];
   },
