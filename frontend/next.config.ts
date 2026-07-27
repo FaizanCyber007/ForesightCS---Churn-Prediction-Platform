@@ -12,6 +12,13 @@ const destinationBase = rawBackendUrl
 const nextConfig: NextConfig = {
   // Suppress the Three.js module warning about server-side issues
   serverExternalPackages: ["three"],
+  // Next's default trailingSlash:false normalization 308-redirects every
+  // incoming "/api/v1/foo/" request to "/api/v1/foo" *before* the rewrite
+  // below ever runs, adding a pointless extra hop (and rewriting the
+  // Set-Cookie/redirect chain unnecessarily) on top of the trailing-slash
+  // fix in the rewrite destination. Disabling it lets the rewrite handle
+  // the trailing slash itself, deterministically, in one hop.
+  skipTrailingSlashRedirect: true,
   async rewrites() {
     return [
       // Next.js's `:path*` catch-all drops any trailing slash when it
