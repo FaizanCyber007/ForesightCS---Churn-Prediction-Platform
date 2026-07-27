@@ -49,7 +49,14 @@ export function LoginForm() {
         description: 'Access granted. Opening CS command center.',
         tone: 'success',
       });
-      router.push('/dashboard');
+      // Use a hard redirect instead of router.push() -- the Next.js middleware
+      // checks for the refresh_token cookie at the Vercel edge. Since the
+      // cookie is set on the Render backend domain, the Vercel edge never sees
+      // it directly. A client-side router.push() reuses the cached middleware
+      // decision (unauthenticated) and bounces back to /login. A full-page
+      // redirect forces the browser to re-send all cookies and re-run the
+      // middleware with the real cookie jar, so the dashboard loads correctly.
+      window.location.href = '/dashboard';
     } catch (error) {
       toast({
         title: 'Authentication Failed',
@@ -160,7 +167,7 @@ export function RegisterForm() {
         description: `Welcome to ForesightCS, ${values.fullName}.`,
         tone: 'success',
       });
-      router.push('/dashboard');
+      window.location.href = '/dashboard';
     } catch (error) {
       if (error instanceof ApiError) {
         // Backend field names (snake_case) -> form field names, so a

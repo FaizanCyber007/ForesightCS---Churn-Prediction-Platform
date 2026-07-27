@@ -4,7 +4,8 @@
 // to "https://foresight-backend-p9dr.onrender.com/api/v1" the paths appended
 // by service calls (e.g. "/api/v1/auth/me/") would double up to
 // "/api/v1//api/v1/auth/me/" and produce 404s on every request.
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000')
+const rawApiUrl = process.env.NEXT_PUBLIC_API_URL ?? (process.env.NODE_ENV === 'development' ? 'http://localhost:8000' : '');
+const API_BASE_URL = rawApiUrl
   .replace(/\/api\/v\d+\/?$/, '') // strip accidental /api/v1 (or /api/v2, etc.)
   .replace(/\/+$/, '');           // strip any remaining trailing slashes
 
