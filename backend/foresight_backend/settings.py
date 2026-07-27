@@ -257,16 +257,18 @@ SPECTACULAR_SETTINGS = {
 }
 
 # CORS -- frontend (Next.js) origin(s) only, read from .env.
-CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS")
+# Strip trailing slashes from every origin: corsheaders.E014 rejects them and
+# Render's dashboard makes it easy to accidentally include one.
+CORS_ALLOWED_ORIGINS = [o.rstrip("/") for o in env("CORS_ALLOWED_ORIGINS")]
 # Needed for CSRF-protected, cookie-based requests (Django admin,
 # SessionAuthentication) originating from the frontend's origin -- CORS
 # and CSRF are separate mechanisms; CORS_ALLOWED_ORIGINS above doesn't
 # satisfy this.
-CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS")
+CSRF_TRUSTED_ORIGINS = [o.rstrip("/") for o in env("CSRF_TRUSTED_ORIGINS")]
 # Deployed frontend origin (Vercel), set once as a single env var rather than
 # re-listing it inside ALLOWED_HOSTS/CORS_ALLOWED_ORIGINS/CSRF_TRUSTED_ORIGINS
 # separately on every redeploy. Must include the scheme (https://...).
-FRONTEND_URL = env("FRONTEND_URL", default="")
+FRONTEND_URL = env("FRONTEND_URL", default="").rstrip("/")
 if FRONTEND_URL:
     if FRONTEND_URL not in CORS_ALLOWED_ORIGINS:
         CORS_ALLOWED_ORIGINS.append(FRONTEND_URL)
