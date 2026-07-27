@@ -1,35 +1,81 @@
-# ForesightCS
+# 🔮 ForesightCS: Predictive Churn & Customer Success Platform
 
 ForesightCS is a multi-tenant B2B SaaS platform that predicts customer churn and manages account
-health for SMB software companies, using a heuristic (rule-based) scoring engine. It provides a
-Customer Success command center with actionable insights, detailed telemetry, and a rule builder
-for predictive churn analysis.
+health for SMB software companies, using a heuristic (rule-based) scoring engine. It gives
+Customer Success teams a command center with actionable insights, detailed telemetry, and a rule
+builder for predictive churn analysis.
 
-- **Backend** (`/backend`): Django 5, Django REST Framework, PostgreSQL.
-- **Frontend** (`/frontend`): Next.js 14 (App Router), TypeScript, Tailwind CSS.
+## a. What It Does & The Problem It Solves
 
-## Features
+**What it does:** ForesightCS tracks per-customer usage telemetry (`EventLog`s), runs it through a
+configurable, weighted rule engine to produce a health score, and surfaces the result in a
+Customer Success command center — dashboard, customer 360 view, inbox/tasks, and playbooks — so a
+CSM always has a live, explainable read on account health.
 
-- **Dashboard / Command Center**: customer health overview, metric cards, interactive charts, and
-  a data table of healthy/at-risk/critical customers — all backed by real Postgres data.
-- **Customer 360 View**: telemetry timeline, notes, billing status, and a "Recalculate Health
-  Score" action that re-runs the rule engine (the only way a customer's score can change).
-- **Rule Builder**: configure the weighted rules the churn-scoring engine evaluates against
-  customer telemetry.
-- **Inbox / Tasks** and **Playbooks**: CS workflow tracking, fully persisted through the API.
-- **Super-admin**: cross-tenant organization management (suspend/reactivate, global metrics).
+**The problem it solves (and for whom):**
 
-## Tech Stack
-
-| Layer | Stack |
-|---|---|
-| Backend | Django 5, DRF, PostgreSQL, `psycopg3`, `django-environ`, `drf-spectacular`, `django-filter` |
-| Frontend | Next.js 14 (App Router), TypeScript, Tailwind CSS, Framer Motion, `@react-three/fiber`, React Hook Form, Zod |
-| Testing/Lint | `pytest` + `factory_boy` (backend), `vitest` + React Testing Library (frontend), `black` + `flake8`, `eslint` |
+- **Target audience:** SMB SaaS founders and Customer Success Managers.
+- **The problem:** B2B startups routinely lose Monthly Recurring Revenue because nobody notices an
+  account is unhappy until the cancellation request arrives. Enterprise CS platforms that solve
+  this cost tens of thousands of dollars a year and take months to integrate. ForesightCS gives a
+  small team an affordable, transparent, rule-based alternative: define the signals that predict
+  churn for your product, let the engine score every account against them, and catch at-risk
+  customers before they leave.
 
 ---
 
-## Complete setup guide (do this before running anything)
+## b. Live Deployment & Repository
+
+🌍 **Live Application:** [https://foresight-cs-churn-prediction-platf.vercel.app/](https://foresight-cs-churn-prediction-platf.vercel.app/)
+💻 **GitHub Repository:** [https://github.com/FaizanCyber007/ForesightCS---Churn-Prediction-Platform](https://github.com/FaizanCyber007/ForesightCS---Churn-Prediction-Platform)
+
+Frontend is deployed on Vercel, backend on Render, with a managed PostgreSQL instance. The app
+auto-seeds realistic demo data (organization, customers, health rules, tasks, playbooks, notes) so
+the dashboard is populated out of the box.
+
+---
+
+## c. Feature List
+
+- **Dashboard / Command Center** — customer health overview, metric cards, interactive charts, and
+  a data table of healthy / at-risk / critical customers, all backed by real Postgres data.
+- **Churn Scoring Engine** — every customer starts at a base score of 100; the engine walks the
+  organization's `HealthRule`s and subtracts each rule's weight when a customer's telemetry
+  violates it. Score bands: **71–100 Healthy**, **41–70 At Risk**, **0–40 Critical**. Implemented
+  in `backend/customers/services.py` (`HealthScoreEngine`), kept out of views/serializers so the
+  API layer stays a thin orchestrator.
+- **Customer 360 View** — telemetry timeline, notes, billing status, and a "Recalculate Health
+  Score" action that re-runs the rule engine (the only way a customer's score changes).
+- **Dynamic Rule Builder** — configure the weighted rules the engine evaluates against customer
+  telemetry (e.g. "deduct 30 points if logins drop by 50%").
+- **Inbox / Tasks & Playbooks** — CS workflow tracking, fully persisted through the API.
+- **Strict Multi-Tenancy** — every customer, rule, user, and event belongs to an `Organization`.
+  All queries are automatically scoped to the authenticated user's organization via custom Django
+  managers; cross-tenant data leakage is treated as a fatal bug.
+- **Soft Delete Everywhere** — no record is ever hard-deleted; every model carries `deleted_at`,
+  and API queries transparently exclude soft-deleted rows.
+- **Front-to-Back Validation Symmetry** — DRF serializer validation mirrors the frontend's Zod
+  schemas, so the same rules apply whether a request comes from the UI or the API directly.
+- **Billing Integration** — Lemon Squeezy webhook endpoint for subscription/billing events.
+- **Super-admin Hub** — cross-tenant organization management (suspend/reactivate, global metrics)
+  for platform operators.
+
+---
+
+## d. Tools, Services & Stack
+
+| Layer | Stack / Tool |
+|---|---|
+| **Backend** | Django 5, Django REST Framework, PostgreSQL, `psycopg3`, `django-environ`, `drf-spectacular`, `django-filter` |
+| **Frontend** | Next.js 14 (App Router), TypeScript, Tailwind CSS, Framer Motion, `@react-three/fiber`, React Hook Form, Zod |
+| **Async/Jobs** | Celery worker (solo pool) |
+| **Billing** | Lemon Squeezy webhooks |
+| **Testing/Lint** | `pytest` + `factory_boy` (backend), `vitest` + React Testing Library (frontend), `black` + `flake8`, `eslint` |
+| **Hosting** | Vercel (frontend), Render (backend web + worker), managed PostgreSQL |
+
+---
+
+## e. How to Run the Project Locally
 
 ### 1. Prerequisites — install once
 
@@ -161,7 +207,9 @@ npm run build
   `RUNSERVER_HOST=0.0.0.0:8001 python start.py` (backend) / `npm run dev -- -p 3001` (frontend),
   updating `NEXT_PUBLIC_API_URL` to match if you change the backend port.
 
-## Project Structure
+---
+
+## f. Project Structure
 
 ```
 backend/
