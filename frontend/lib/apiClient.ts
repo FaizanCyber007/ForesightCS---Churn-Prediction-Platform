@@ -1,4 +1,12 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
+// Strip trailing slashes and any accidental "/api/v1" suffix that gets pasted
+// into the Vercel env var. The correct value is just the host origin, e.g.
+// "https://foresight-backend-p9dr.onrender.com" (no path). If someone sets it
+// to "https://foresight-backend-p9dr.onrender.com/api/v1" the paths appended
+// by service calls (e.g. "/api/v1/auth/me/") would double up to
+// "/api/v1//api/v1/auth/me/" and produce 404s on every request.
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000')
+  .replace(/\/api\/v\d+\/?$/, '') // strip accidental /api/v1 (or /api/v2, etc.)
+  .replace(/\/+$/, '');           // strip any remaining trailing slashes
 
 /**
  * Field-level validation errors as returned by DRF serializers, e.g.
