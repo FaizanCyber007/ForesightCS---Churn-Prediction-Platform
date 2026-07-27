@@ -17,7 +17,14 @@ echo "==> Step 3/4: Starting Celery worker (backgrounded)..."
 # default). On Render free tier without a Redis add-on the worker would
 # crash-loop; skip it so Gunicorn (step 4) still comes up.
 if [ -n "${REDIS_URL:-}" ] && [ "${REDIS_URL}" != "redis://127.0.0.1:6379/0" ]; then
-    celery -A foresight_backend worker --loglevel=info &
+    # --pool=solo: no forking, one task at a time, minimal memory footprint.
+    # Celery's default prefork pool forks one child process per CPU core
+    # detected (commonly 8+ even on tiny instances), which can exceed a
+    # small Render instance's RAM and get OOM-killed -- taking Gunicorn down
+    # with it since they share the same container. This worker only runs an
+    # infrequent nightly task (see CELERY_BEAT_SCHEDULE in settings.py), so
+    # there's no concurrency to gain from prefork anyway.
+    celery -A foresight_backend worker --loglevel=info --pool=solo &
 else
     echo "    REDIS_URL not configured or points to localhost -- skipping Celery worker."
 fi
