@@ -21,7 +21,10 @@ env = environ.Env(
 )
 environ.Env.read_env(BASE_DIR / ".env")
 
-SECRET_KEY = env("DJANGO_SECRET_KEY")
+SECRET_KEY = env(
+    "DJANGO_SECRET_KEY",
+    default=env("SECRET_KEY", default="django-insecure-change-me-in-production-foresight-cs"),
+)
 DEBUG = env("DEBUG")
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 # Render's default *.onrender.com domain is always a valid host for this
@@ -33,7 +36,7 @@ if ".onrender.com" not in ALLOWED_HOSTS:
 # Signing key for access/refresh JWTs (rest_framework_simplejwt). Kept
 # separate from SECRET_KEY so rotating one never invalidates the other's
 # tokens/sessions.
-JWT_SECRET = env("JWT_SECRET")
+JWT_SECRET = env("JWT_SECRET", default=SECRET_KEY)
 
 
 # Application definition
