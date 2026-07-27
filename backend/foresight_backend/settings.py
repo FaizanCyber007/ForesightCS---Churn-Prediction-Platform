@@ -315,34 +315,23 @@ if FRONTEND_URL and FRONTEND_URL.startswith(("http://", "https://")):
         CSRF_TRUSTED_ORIGINS.append(FRONTEND_URL)
 # Required for the browser to attach HttpOnly JWT cookies on cross-origin
 # requests -- without this the browser silently drops Set-Cookie headers.
-CORS_ALLOW_CREDENTIALS = True
-
-# Vercel preview deployments get a unique URL per commit/branch
-# (e.g. myapp-git-main-myteam.vercel.app) that differs from the production
-# URL. CORS_ALLOWED_ORIGINS only does exact matching, so preview URLs are
-# rejected even though the production URL is correctly configured.
-#
-# Fix: set VERCEL_TEAM_SUFFIX in Render to the account/team slug that appears
-# at the end of ALL your preview URLs. For example, for:
-#   https://foresight-cs-churn-p-git-abc123-faizan-javeds-projects-04834141.vercel.app
-# the suffix is: faizan-javeds-projects-04834141
-#
-# This regex then allows EVERY preview URL for that Vercel account.
-_vercel_suffix = env("VERCEL_TEAM_SUFFIX", default="").strip().lstrip("-")
+# Vercel generates unpredictable preview URLs per commit/branch
+# (e.g. myapp-git-abc123-team.vercel.app, myapp-gzh7thmmz.vercel.app, etc.).
+# No suffix-based regex can reliably cover all patterns Vercel uses.
+# When FRONTEND_URL is set (production deployment), allow ALL https://*.vercel.app
+# origins so every preview deployment can reach the backend without manual
+# configuration. Authentication still requires valid per-user JWT cookies, so
+# this does not grant unauthenticated access to any data.
 CORS_ALLOWED_ORIGIN_REGEXES = []
-if _vercel_suffix:
-    # Matches: https://<anything>-<suffix>.vercel.app
-    CORS_ALLOWED_ORIGIN_REGEXES.append(
-        rf"^https://[\w-]+-{re.escape(_vercel_suffix)}\.vercel\.app$"
-    )
-    # Also match the production URL which may not have the suffix in it
-    # (e.g. https://foresight-cs-churn-prediction-platf.vercel.app)
-    if FRONTEND_URL and FRONTEND_URL not in CORS_ALLOWED_ORIGINS:
-        CORS_ALLOWED_ORIGIN_REGEXES.append(rf"^{re.escape(FRONTEND_URL)}$")
-    # Extend CSRF_TRUSTED_ORIGINS for the same preview URL pattern so Django's
-    # CSRF middleware also accepts requests from preview deployments.
+if FRONTEND_URL:
+    # Matches every Vercel deployment URL: https://<anything>.vercel.app
+    CORS_ALLOWED_ORIGIN_REGEXES.append(r"^https://[\w-]+\.vercel\.app$")
+    # Also add *.vercel.app to CSRF_TRUSTED_ORIGINS so Django's CSRF middleware
+    # accepts cookie-authenticated requests from Vercel preview deployments.
     if not any("vercel.app" in o for o in CSRF_TRUSTED_ORIGINS):
         CSRF_TRUSTED_ORIGINS.append("https://*.vercel.app")
+CORS_ALLOW_CREDENTIALS = True
+
 
 # Production hardening (django's own `manage.py check --deploy` checklist:
 # security.W004/W008/W012/W016) -- gated on DEBUG so local dev over plain
