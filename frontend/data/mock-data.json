@@ -1,0 +1,114 @@
+{
+  "healthPalette": {
+    "Healthy": "#34d399",
+    "At-Risk": "#f59e0b",
+    "Critical": "#fb7185"
+  },
+  "publicStats": [
+    {
+      "value": "27%",
+      "label": "Average churn reduction"
+    },
+    {
+      "value": "4.3x",
+      "label": "Faster risk intervention"
+    },
+    {
+      "value": "98%",
+      "label": "Signal data coverage"
+    },
+    {
+      "value": "$2.1B",
+      "label": "ARR protected to date"
+    }
+  ],
+  "landingTestimonials": [
+    {
+      "quote": "ForesightCS gave our CSM team a single source of truth. We stopped chasing spreadsheets and started protecting revenue.",
+      "name": "Amina Shah",
+      "title": "VP Customer Success",
+      "company": "Northpeak"
+    },
+    {
+      "quote": "The health model is opinionated enough to be useful, but flexible enough to fit our billing and product data perfectly.",
+      "name": "Jordan Lee",
+      "title": "RevOps Lead",
+      "company": "SignalDesk"
+    },
+    {
+      "quote": "Every CSM knows what to do next. Leadership gets a clean revenue story. It changed how we operate entirely.",
+      "name": "Marta Alvarez",
+      "title": "Founder",
+      "company": "BrightLoop"
+    },
+    {
+      "quote": "We identified three at-risk accounts in our first week. Two of those became expansions because we acted early.",
+      "name": "Daniel Chen",
+      "title": "Director of CS",
+      "company": "Vortex SaaS"
+    },
+    {
+      "quote": "The rule builder let us encode years of institutional knowledge into automated workflows. That's invaluable.",
+      "name": "Priya Nair",
+      "title": "Head of Renewals",
+      "company": "Cloudify"
+    },
+    {
+      "quote": "Setup was seamless. We had our first risk signals in under 24 hours. Incredible time-to-value.",
+      "name": "Marcus Williams",
+      "title": "COO",
+      "company": "Launchpad CRM"
+    }
+  ],
+  "howItWorks": [
+    {
+      "step": "01",
+      "title": "Connect your signals",
+      "description": "Integrate product telemetry, billing events, support data, and CRM context into one unified health layer in minutes."
+    },
+    {
+      "step": "02",
+      "title": "Predict risk early",
+      "description": "Our ML model scores every account daily based on your weighted signals, surfacing churn risk weeks before it becomes visible."
+    },
+    {
+      "step": "03",
+      "title": "Act with playbooks",
+      "description": "Turn risk signals into prescriptive actions \u00e2\u20ac\u201d executive outreach, QBR scheduling, billing follow-ups \u00e2\u20ac\u201d and track outcomes."
+    }
+  ],
+  "integrations": [
+    {
+      "name": "Salesforce",
+      "category": "CRM"
+    },
+    {
+      "name": "HubSpot",
+      "category": "CRM"
+    },
+    {
+      "name": "Stripe",
+      "category": "Billing"
+    },
+    {
+      "name": "Chargebee",
+      "category": "Billing"
+    },
+    {
+      "name": "Zendesk",
+      "category": "Support"
+    },
+    {
+      "name": "Intercom",
+      "category": "Support"
+    },
+    {
+      "name": "Segment",
+      "category": "Product"
+    },
+    {
+      "name": "Mixpanel",
+      "category": "Product"
+    }
+  ]
+}
